@@ -1,96 +1,83 @@
 package np.com.bimalkafle.musicstream
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Patterns
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import np.com.bimalkafle.musicstream.databinding.ActivitySignupBinding
-import java.util.regex.Pattern
 
 class SignupActivity : AppCompatActivity() {
 
-
-    lateinit var  binding: ActivitySignupBinding
+    private lateinit var binding: ActivitySignupBinding
+    private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySignupBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.createAccountBtn.setOnClickListener {
+        setupListeners()
+    }
 
-            val email = binding.emailEdittext.text.toString()
+    private fun setupListeners() {
+        binding.createAccountBtn.setOnClickListener {
+            val email = binding.emailEdittext.text.toString().trim()
             val password = binding.passwordEdittext.text.toString()
             val confirmPassword = binding.confirmPasswordEdittext.text.toString()
 
-           if(!Pattern.matches(Patterns.EMAIL_ADDRESS.pattern(),email)){
-               binding.emailEdittext.setError("Invalid email")
-               return@setOnClickListener
-           }
-
-            if(password.length < 6){
-                binding.passwordEdittext.setError("Length should be 6 char")
+            if (!isValidEmail(email)) {
+                binding.emailEdittext.error = "Invalid email"
                 return@setOnClickListener
             }
 
-            if(!password.equals(confirmPassword)){
-                binding.confirmPasswordEdittext.setError("Password not matched")
+            if (!isValidPassword(password)) {
+                binding.passwordEdittext.error = "Password must be at least 6 characters"
                 return@setOnClickListener
             }
 
-            createAccountWithFirebase(email,password)
+            if (password != confirmPassword) {
+                binding.confirmPasswordEdittext.error = "Passwords do not match"
+                return@setOnClickListener
+            }
 
-
-
+            createAccount(email, password)
         }
 
         binding.gotoLoginBtn.setOnClickListener {
             finish()
         }
-
     }
 
-    fun createAccountWithFirebase(email : String,password: String){
+    private fun createAccount(email: String, password: String) {
         setInProgress(true)
-        FirebaseAuth.getInstance().createUserWithEmailAndPassword(email,password)
+        auth.createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener {
                 setInProgress(false)
-                Toast.makeText(applicationContext,"User created successfully",Toast.LENGTH_SHORT).show()
+                showToast("Account created successfully")
                 finish()
-            }.addOnFailureListener {
+            }
+            .addOnFailureListener {
                 setInProgress(false)
-                Toast.makeText(applicationContext,"Create account failed",Toast.LENGTH_SHORT).show()
+                showToast("Account creation failed: ${it.message}")
             }
     }
 
-
-    fun setInProgress(inProgress : Boolean){
-        if(inProgress){
-            binding.createAccountBtn.visibility = View.GONE
-            binding.progressBar.visibility = View.VISIBLE
-        }else{
-            binding.createAccountBtn.visibility = View.VISIBLE
-            binding.progressBar.visibility = View.GONE
-        }
+    private fun setInProgress(inProgress: Boolean) {
+        binding.progressBar.visibility = if (inProgress) View.VISIBLE else View.GONE
+        binding.createAccountBtn.visibility = if (inProgress) View.GONE else View.VISIBLE
     }
 
+    private fun showToast(message: String) {
+        Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT).show()
+    }
 
+    private fun isValidEmail(email: String): Boolean {
+        return Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
+
+    private fun isValidPassword(password: String): Boolean {
+        return password.length >= 6
+    }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

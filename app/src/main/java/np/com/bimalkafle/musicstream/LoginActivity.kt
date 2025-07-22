@@ -1,75 +1,91 @@
 package np.com.bimalkafle.musicstream
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
+import android.util.Log
 import android.os.Bundle
 import android.util.Patterns
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import np.com.bimalkafle.musicstream.databinding.ActivityLoginBinding
-import java.util.regex.Pattern
 
 class LoginActivity : AppCompatActivity() {
 
-    lateinit var  binding: ActivityLoginBinding
+    private lateinit var binding: ActivityLoginBinding
+    private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.loginBtn.setOnClickListener {
-            val email = binding.emailEdittext.text.toString()
-            val password = binding.passwordEdittext.text.toString()
-
-            if(!Pattern.matches(Patterns.EMAIL_ADDRESS.pattern(),email)){
-                binding.emailEdittext.setError("Invalid email")
-                return@setOnClickListener
-            }
-
-            if(password.length < 6){
-                binding.passwordEdittext.setError("Length should be 6 char")
-                return@setOnClickListener
-            }
-
-
-            loginWithFirebase(email,password)
-        }
-
-        binding.gotoSignupBtn.setOnClickListener {
-            startActivity(Intent(this,SignupActivity::class.java))
-        }
-
-    }
-
-    fun loginWithFirebase(email : String,password: String){
-        setInProgress(true)
-        FirebaseAuth.getInstance().signInWithEmailAndPassword(email,password)
-            .addOnSuccessListener {
-                setInProgress(false)
-                startActivity(Intent(this@LoginActivity,MainActivity::class.java))
-                finish()
-            }.addOnFailureListener {
-                setInProgress(false)
-                Toast.makeText(applicationContext,"Login account failed", Toast.LENGTH_SHORT).show()
-            }
+        setupListeners()
     }
 
     override fun onResume() {
         super.onResume()
-        FirebaseAuth.getInstance().currentUser?.apply {
-            startActivity(Intent(this@LoginActivity,MainActivity::class.java))
-            finish()
+        auth.currentUser?.let {
+            navigateToMain()
         }
     }
 
-    fun setInProgress(inProgress : Boolean){
-        if(inProgress){
-            binding.loginBtn.visibility = View.GONE
-            binding.progressBar.visibility = View.VISIBLE
-        }else{
-            binding.loginBtn.visibility = View.VISIBLE
-            binding.progressBar.visibility = View.GONE
+    private fun setupListeners() {
+        binding.loginBtn.setOnClickListener {
+            val email = binding.emailEdittext.text.toString().trim()
+            val password = binding.passwordEdittext.text.toString()
+
+            if (!isValidEmail(email)) {
+                binding.emailEdittext.error = "Invalid email"
+                return@setOnClickListener
+            }
+
+            if (!isValidPassword(password)) {
+                binding.passwordEdittext.error = "Password must be at least 6 characters"
+                return@setOnClickListener
+            }
+
+            loginWithFirebase(email, password)
         }
+
+        binding.gotoSignupBtn.setOnClickListener {
+            startActivity(Intent(this, SignupActivity::class.java))
+        }
+    }
+
+    private fun loginWithFirebase(email: String, password: String) {
+        setInProgress(true)
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnSuccessListener {
+                setInProgress(false)
+                navigateToMain()
+            }
+            .addOnFailureListener {
+                setInProgress(false)
+                Log.d("FIREBASE", "${it.message}")
+                showToast("Login failed: ${it.message}")
+            }
+    }
+
+    private fun setInProgress(inProgress: Boolean) {
+        binding.progressBar.visibility = if (inProgress) View.VISIBLE else View.GONE
+        binding.loginBtn.visibility = if (inProgress) View.GONE else View.VISIBLE
+    }
+
+    private fun navigateToMain() {
+        startActivity(Intent(this, MainActivity::class.java))
+        finish()
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun isValidEmail(email: String): Boolean {
+        return Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
+
+    private fun isValidPassword(password: String): Boolean {
+        return password.length >= 6
     }
 }
