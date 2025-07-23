@@ -32,7 +32,7 @@ class PlayerActivity : AppCompatActivity() {
             binding.songSubtitleTextView.text = subtitle
 
             // Load local asset image
-            val imageUri = "file:///android_asset/images/${coverUrl}"
+            val imageUri = coverUrl
             Glide.with(binding.songCoverImageView.context)
                 .load(imageUri)
                 .apply(RequestOptions.circleCropTransform())
