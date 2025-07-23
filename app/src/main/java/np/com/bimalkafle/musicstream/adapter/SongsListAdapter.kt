@@ -13,33 +13,41 @@ import np.com.bimalkafle.musicstream.PlayerActivity
 import np.com.bimalkafle.musicstream.SongsListActivity
 import np.com.bimalkafle.musicstream.databinding.SongListItemRecyclerRowBinding
 import np.com.bimalkafle.musicstream.models.SongModel
-
+import android.util.Log
+import android.widget.Toast
 class SongsListAdapter(private  val songIdList : List<String>) :
     RecyclerView.Adapter<SongsListAdapter.MyViewHolder>() {
 
     class MyViewHolder(private val binding: SongListItemRecyclerRowBinding) : RecyclerView.ViewHolder(binding.root){
         //bind data with view
-        fun bindData(songId : String){
+        fun bindData(songId: String) {
+            // Log xem bài hát nào đang được bind
+            Log.d("SongsListAdapter", "Binding songId: $songId")
+            Toast.makeText(binding.root.context, "Loading song: $songId", Toast.LENGTH_SHORT).show()
 
             FirebaseFirestore.getInstance().collection("songs")
                 .document(songId).get()
                 .addOnSuccessListener {
                     val song = it.toObject(SongModel::class.java)
-                    song?.apply {
-                        binding.songTitleTextView.text = title
-                        binding.songSubtitleTextView.text = subtitle
-                        Glide.with(binding.songCoverImageView).load(coverUrl)
-                            .apply(
-                                RequestOptions().transform(RoundedCorners(32))
-                            )
+                    if (song != null) {
+                        Log.d("SongsListAdapter", "Loaded song: ${song.title}")
+                        binding.songTitleTextView.text = song.title
+                        binding.songSubtitleTextView.text = song.subtitle
+                        Glide.with(binding.songCoverImageView).load(song.coverUrl)
+                            .apply(RequestOptions().transform(RoundedCorners(32)))
                             .into(binding.songCoverImageView)
+
                         binding.root.setOnClickListener {
-                            MyExoplayer.startPlaying(binding.root.context,song)
-                            it.context.startActivity(Intent(it.context,PlayerActivity::class.java))
+                            MyExoplayer.startPlaying(binding.root.context, song)
+                            it.context.startActivity(Intent(it.context, PlayerActivity::class.java))
                         }
+                    } else {
+                        Log.w("SongsListAdapter", "Song not found for ID: $songId")
                     }
                 }
-
+                .addOnFailureListener { e ->
+                    Log.e("SongsListAdapter", "Error loading song with ID: $songId", e)
+                }
         }
     }
 
