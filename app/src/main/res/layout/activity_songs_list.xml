@@ -22,6 +22,24 @@
         android:layout_margin="16dp"
         android:id="@+id/cover_image_view"/>
 
+    <!-- NEW: Button chọn file -->
+    <Button
+        android:id="@+id/pickButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Chọn file nhạc"
+        android:layout_marginTop="8dp" />
+
+    <!-- NEW: Text hiển thị tên file -->
+    <TextView
+        android:id="@+id/fileNameText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Tên file đã chọn sẽ hiện ở đây"
+        android:textColor="@color/white"
+        android:gravity="center"
+        android:layout_marginTop="4dp" />
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -42,19 +60,4 @@
         android:layout_height="match_parent"
         android:id="@+id/songs_list_recycler_view"/>
 
-
 </LinearLayout>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
