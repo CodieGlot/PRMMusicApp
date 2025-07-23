@@ -1,76 +1,61 @@
 package np.com.bimalkafle.musicstream
 
 import android.content.Context
+import android.net.Uri
 import androidx.media3.common.MediaItem
+import androidx.media3.datasource.AssetDataSource
+import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DataSpec
 import androidx.media3.exoplayer.ExoPlayer
-import com.google.firebase.firestore.FirebaseFirestore
+import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import np.com.bimalkafle.musicstream.models.SongModel
 
 object MyExoplayer {
 
-    private var exoPlayer : ExoPlayer? = null
-    private var currentSong : SongModel? =null
+    private var exoPlayer: ExoPlayer? = null
+    private var currentSong: SongModel? = null
 
-    fun getCurrentSong() : SongModel?{
+    fun getCurrentSong(): SongModel? {
         return currentSong
     }
 
-    fun getInstance() : ExoPlayer?{
+    fun getInstance(): ExoPlayer? {
         return exoPlayer
     }
 
-    fun startPlaying(context : Context, song : SongModel){
-        if(exoPlayer==null)
+    fun startPlaying(context: Context, song: SongModel) {
+        if (exoPlayer == null) {
             exoPlayer = ExoPlayer.Builder(context).build()
+        }
 
-        if(currentSong!=song){
-            //Its a new song so start playing
+        if (currentSong != song) {
             currentSong = song
-            updateCount()
-            currentSong?.url?.apply {
-                val mediaItem = MediaItem.fromUri(this)
-                exoPlayer?.setMediaItem(mediaItem)
+
+            val mediaSource = buildMediaSourceFromAssets(context, song.url)
+            if (mediaSource != null) {
+                exoPlayer?.setMediaSource(mediaSource)
                 exoPlayer?.prepare()
                 exoPlayer?.play()
-
             }
         }
-
-
     }
 
-    fun updateCount(){
-        currentSong?.id?.let {id->
-            FirebaseFirestore.getInstance().collection("songs")
-                .document(id)
-                .get().addOnSuccessListener {
-                    var latestCount = it.getLong("count")
-                    if(latestCount==null){
-                        latestCount = 1L
-                    }else{
-                        latestCount = latestCount+1
-                    }
+    private fun buildMediaSourceFromAssets(context: Context, assetPath: String): ProgressiveMediaSource? {
+        return try {
+            // ExoPlayer URI for assets must be like asset:///music/Blue.mp3
+            val uri = Uri.parse("asset:///$assetPath")
 
-                    FirebaseFirestore.getInstance().collection("songs")
-                        .document(id)
-                        .update(mapOf("count" to latestCount))
+            val dataSourceFactory = DataSource.Factory {
+                val dataSource = AssetDataSource(context)
+                dataSource.open(DataSpec(uri))
+                dataSource
+            }
 
-                }
+            ProgressiveMediaSource.Factory(dataSourceFactory)
+                .createMediaSource(MediaItem.fromUri(uri))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

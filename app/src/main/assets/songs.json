@@ -1,0 +1,23 @@
+[
+  {
+    "id": "1",
+    "title": "Blue - Yung Kai",
+    "subtitle": "Blue",
+    "url": "music/Blue.mp3",
+    "coverUrl": "file:///android_asset/images/Blue.jpg"
+  },
+  {
+    "id": "2",
+    "title": "Only You - Joseph Vincent",
+    "subtitle": "Only You",
+    "url": "music/OnlyYou.mp3",
+    "coverUrl": "file:///android_asset/images/OnlyYou.jpg"
+  },
+  {
+    "id": "3",
+    "title": "Our First Song - Joseph Vincent",
+    "subtitle": "Our First Song",
+    "url": "music/OurFirstSong.mp3",
+    "coverUrl": "file:///android_asset/images/OurFirstSong.jpg"
+  }
+]
